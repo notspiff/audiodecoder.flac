@@ -29,10 +29,7 @@ extern "C" {
 
 ADDON::CHelper_libXBMC_addon *XBMC           = NULL;
 
-//-- Create -------------------------------------------------------------------
-// Called on load. Addon should fully initalize or return error status
-//-----------------------------------------------------------------------------
-ADDON_STATUS ADDON_Create(void* hdl, void* props)
+bool registerHelper(void* hdl)
 {
   if (!XBMC)
     XBMC = new ADDON::CHelper_libXBMC_addon;
@@ -40,8 +37,19 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
   if (!XBMC->RegisterMe(hdl))
   {
     delete XBMC, XBMC=NULL;
-    return ADDON_STATUS_PERMANENT_FAILURE;
+    return false;
   }
+
+  return true;
+}
+
+//-- Create -------------------------------------------------------------------
+// Called on load. Addon should fully initalize or return error status
+//-----------------------------------------------------------------------------
+ADDON_STATUS ADDON_Create(void* hdl, void* props)
+{
+  if (!registerHelper(hdl))
+    return ADDON_STATUS_PERMANENT_FAILURE;
 
   return ADDON_STATUS_OK;
 }
@@ -154,7 +162,7 @@ struct FLACContext
 FLAC__StreamDecoderReadStatus DecoderReadCallback(const FLAC__StreamDecoder *decoder, FLAC__byte buffer[], size_t *bytes, void *client_data)
 {
   FLACContext* pThis=(FLACContext*)client_data;
-  if (!pThis)
+  if (!pThis || !XBMC)
     return FLAC__STREAM_DECODER_READ_STATUS_ABORT;
 
   *bytes=XBMC->ReadFile(pThis->file, buffer, *bytes);
@@ -165,7 +173,7 @@ FLAC__StreamDecoderReadStatus DecoderReadCallback(const FLAC__StreamDecoder *dec
 FLAC__StreamDecoderSeekStatus DecoderSeekCallback(const FLAC__StreamDecoder *decoder, FLAC__uint64 absolute_byte_offset, void *client_data)
 {
   FLACContext* pThis=(FLACContext*)client_data;
-  if (!pThis)
+  if (!pThis || !XBMC)
     return FLAC__STREAM_DECODER_SEEK_STATUS_ERROR;
 
   if (XBMC->SeekFile(pThis->file,absolute_byte_offset, SEEK_SET)<0)
@@ -177,7 +185,7 @@ FLAC__StreamDecoderSeekStatus DecoderSeekCallback(const FLAC__StreamDecoder *dec
 FLAC__StreamDecoderTellStatus DecoderTellCallback(const FLAC__StreamDecoder *decoder, FLAC__uint64 *absolute_byte_offset, void *client_data)
 {
   FLACContext* pThis=(FLACContext*)client_data;
-  if (!pThis)
+  if (!pThis || !XBMC)
     return FLAC__STREAM_DECODER_TELL_STATUS_ERROR;
 
   *absolute_byte_offset=XBMC->GetFilePosition(pThis->file);
@@ -188,7 +196,7 @@ FLAC__StreamDecoderTellStatus DecoderTellCallback(const FLAC__StreamDecoder *dec
 FLAC__StreamDecoderLengthStatus DecoderLengthCallback(const FLAC__StreamDecoder *decoder, FLAC__uint64 *stream_length, void *client_data)
 {
   FLACContext* pThis=(FLACContext*)client_data;
-  if (!pThis)
+  if (!pThis || !XBMC)
     return FLAC__STREAM_DECODER_LENGTH_STATUS_ERROR;
 
   *stream_length=XBMC->GetFileLength(pThis->file);
@@ -199,7 +207,7 @@ FLAC__StreamDecoderLengthStatus DecoderLengthCallback(const FLAC__StreamDecoder 
 FLAC__bool DecoderEofCallback(const FLAC__StreamDecoder *decoder, void *client_data)
 {
   FLACContext* pThis=(FLACContext*)client_data;
-  if (!pThis)
+  if (!pThis || !XBMC)
     return true;
 
   return XBMC->GetFileLength(pThis->file)==XBMC->GetFilePosition(pThis->file);
@@ -208,7 +216,7 @@ FLAC__bool DecoderEofCallback(const FLAC__StreamDecoder *decoder, void *client_d
 FLAC__StreamDecoderWriteStatus DecoderWriteCallback(const FLAC__StreamDecoder *decoder, const FLAC__Frame *frame, const FLAC__int32 * const buffer[], void *client_data)
 {
   FLACContext* pThis=(FLACContext*)client_data;
-  if (!pThis)
+  if (!pThis || !XBMC)
     return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
 
   const int bytes_per_sample = frame->header.bits_per_sample/8;
@@ -293,6 +301,9 @@ void DecoderMetadataCallback(const FLAC__StreamDecoder *decoder, const FLAC__Str
 
 void DecoderErrorCallback(const FLAC__StreamDecoder *decoder, FLAC__StreamDecoderErrorStatus status, void *client_data)
 {
+  if (!XBMC)
+    return;
+
   XBMC->Log(ADDON::LOG_ERROR, "FLACCodec: Read error %i", status);
 }
 
@@ -300,6 +311,9 @@ void* Init(const char* strFile, unsigned int filecache, int* channels,
            int* samplerate, int* bitspersample, int64_t* totaltime,
            int* bitrate, AEDataFormat* format, const AEChannel** channelinfo)
 {
+  if (!XBMC)
+    return NULL;
+
   FLACContext* result = new FLACContext;
 
   result->decoder = FLAC__stream_decoder_new();
