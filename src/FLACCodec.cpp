@@ -166,6 +166,8 @@ FLAC__StreamDecoderReadStatus DecoderReadCallback(const FLAC__StreamDecoder *dec
     return FLAC__STREAM_DECODER_READ_STATUS_ABORT;
 
   *bytes=XBMC->ReadFile(pThis->file, buffer, *bytes);
+  if (*bytes == 0)
+    return FLAC__STREAM_DECODER_READ_STATUS_END_OF_STREAM;
 
   return FLAC__STREAM_DECODER_READ_STATUS_CONTINUE;
 }
