@@ -18,13 +18,13 @@
  *
  */
 
-#include "xbmc/libXBMC_addon.h"
+#include "kodi/libXBMC_addon.h"
 
 extern "C" {
 #include <FLAC/stream_decoder.h>
 #include <FLAC/metadata.h>
-#include "xbmc/xbmc_audiodec_dll.h"
-#include "xbmc/AEChannelData.h"
+#include "kodi/kodi_audiodec_dll.h"
+#include "kodi/AEChannelData.h"
 #include <inttypes.h>
 
 ADDON::CHelper_libXBMC_addon *XBMC           = NULL;
