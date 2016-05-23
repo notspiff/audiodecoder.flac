@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="audiodecoder.flac"
-  version="1.0.0"
+  version="1.1.0"
   name="Flac Audio Decoder"
   provider-name="spiff">
   <requires>
@@ -12,10 +12,10 @@
     name="flac"
     extension=".flac"
     mimetype="audio/flac|audio/x-flac|application/x-flac"
-    library_linux="audiodecoder.flac.so"/>
+    library_@PLATFORM@="@LIBRARY_FILENAME@"/>
   <extension point="xbmc.addon.metadata">
     <summary lang="en">Flac Audio Decoder</summary>
     <description lang="en">Flac Audio Decoder</description>
-    <platform>all</platform>
+    <platform>@PLATFORM@</platform>
   </extension>
 </addon>
